@@ -5,12 +5,6 @@ Created on Wed Apr 29 12:25:19 2026
 @author: hatice
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 29 11:21:42 2026
-
-@author: BUSE
-"""
 
 import pandas as pd
 import numpy as np
@@ -22,33 +16,27 @@ from sklearn.metrics import precision_recall_curve, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import roc_auc_score, average_precision_score
-# ====================================================================
-# BAŞLANGIÇ VE SİSTEM AYARLARI
-# ====================================================================
+
 print("[SİSTEM] Başlatılıyor... Veri belleğe (RAM) alınıyor.")
 warnings.filterwarnings("ignore")
 
-# Optuna'nın deneme (trial) loglarını tamamen susturur, sadece hataları basar.
+
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 print("[SİSTEM] Optuna Motoru Sessiz Moda Alındı. Lütfen Bekleyin (CPU Yoğun İşlem)...")
 
-# ====================================================================
-# MODÜL 1: VERİ İÇE AKTARIMI VE İZOLASYON (DATA LEAKAGE DEFANSI)
-# ====================================================================
+
 df = pd.read_csv('nihai_genetik_veri.csv')
 
 X = df.drop(columns=['CLASS'])
 y = df['CLASS']
 
-# Stratify=y ile dengeli bölme (Rapor Kriteri)
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
 
 print(f"[BAŞARI] X_train (Eğitim Seti) Boyutu: {X_train.shape}")
 print(f"[BAŞARI] X_test (Test Seti) Boyutu: {X_test.shape}")
 
-# ====================================================================
-# MODÜL 2: OPTUNA İLE BAYESYEN OPTİMİZASYON (F2 SKORU ODAKLI)
-# ====================================================================
+
 def objective(trial):
     param = {
         'objective': 'binary',
@@ -90,16 +78,13 @@ def objective(trial):
 
     return np.mean(cv_scores)
 
-# Motoru 30 deneme ile ateşliyoruz (Sessiz çalışacak, bitene kadar bekle)
+
 study = optuna.create_study(direction='maximize')
 study.optimize(objective, n_trials=30) 
 
 print("\n[BAŞARI] Optimizasyon Bitti.")
 print(f"[ANALİZ] Ulaşılan En İyi F2 Skoru: {study.best_value:.4f}")
 
-# ====================================================================
-# MODÜL 3: NİHAİ MODEL EĞİTİMİ VE KLİNİK EŞİK (THRESHOLD)
-# ====================================================================
 print("\n[İŞLEM] Nihai Model Eğitiliyor...")
 best_params = study.best_params
 best_params.update({'objective': 'binary', 'verbose': -1, 'random_state': 42})
@@ -138,18 +123,14 @@ print(f"\n[TELEMETRİ] ROC-AUC Skoru: {roc_auc:.4f}")
 print(f"[TELEMETRİ] PR-AUC Skoru  : {pr_auc:.4f}")
 
 
-# ====================================================================
-# MODÜL 5: DUAL-CORE ENSEMBLE (LIGHTGBM + XGBOOST VOTING)
-# ====================================================================
+
 print("\n[SİSTEM] Modül 5 Başlatılıyor: Dual-Core (LGBM + XGBoost) Motoru Ateşleniyor...")
 
 from sklearn.ensemble import VotingClassifier
 import xgboost as xgb
 
-# 1. LightGBM Motoru (Optuna'dan çıkan en iyi ayarlarla zaten elimizde)
-# final_model değişkeni Modül 3'te eğitilmişti.
 
-# 2. XGBoost Motoru (LightGBM'in mimarisine benzer defansif ayarlarla)
+# XGBoost Modeli (LightGBM'in mimarisine benzer defansif ayarlarla)
 print("[İŞLEM] XGBoost Yardımcı Motoru Hazırlanıyor...")
 xgb_model = xgb.XGBClassifier(
     objective='binary:logistic',
@@ -160,12 +141,12 @@ xgb_model = xgb.XGBClassifier(
     alpha=1.0, # L1 Regularization
     lambda_param=1.0, # L2 Regularization (isim çakışmasını önlemek için lambda_param kullanılır)
     random_state=42,
-    n_jobs=-1 # Tüm CPU çekirdeklerini kullan
+    n_jobs=-1 
 )
 plt.figure(figsize=(8, 6))
 
-# cmap='Blues' yaparak temayı maviye çektik
-# vmin ve vmax değerleri, yüksek sayıların (TN) rengi boğmasını engellemek için hala kritik.
+
+# vmin ve vmax değerleri
 ax = sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
                  annot_kws={"size": 16, "weight": "bold"},
                  xticklabels=['Tahmin: Benign (0)', 'Tahmin: Patojenik (1)'],
@@ -178,8 +159,7 @@ plt.xlabel('Modelin Tahminleri', fontsize=12, fontweight='bold')
 
 plt.tight_layout()
 plt.show()
-# 3. Voting (Oylama) Sınıflandırıcısı
-# 'soft' oylama: İki model de olasılık üretir, sistem bu olasılıkların ortalamasını alır.
+
 print("[İŞLEM] Modeller Birleştiriliyor (Soft Voting)...")
 ensemble_model = VotingClassifier(
     estimators=[('lgbm', final_model), ('xgb', xgb_model)],
@@ -190,7 +170,7 @@ ensemble_model = VotingClassifier(
 print("[İŞLEM] Çift Motor Eğitiliyor (Fan Sesi Yükselebilir)...")
 ensemble_model.fit(X_train, y_train)
 
-# 4. Ensemble Test ve Yeni Dinamik Eşik
+#  Ensemble Test ve Yeni Dinamik Eşik
 test_proba_ens = ensemble_model.predict_proba(X_test)[:, 1]
 
 # F2 Skoru ile Eşiği Çift Motor için tekrar optimize ediyoruz
