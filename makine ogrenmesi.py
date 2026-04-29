@@ -2,7 +2,7 @@
 """
 Created on Wed Apr 29 12:25:19 2026
 
-@author: hatice
+@author: haticegül ve gülderen buse
 """
 
 
