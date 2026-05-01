@@ -31,6 +31,7 @@ X = df.drop(columns=['CLASS'])
 y = df['CLASS']
 
 
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
 
 print(f"[BAŞARI] X_train (Eğitim Seti) Boyutu: {X_train.shape}")
@@ -192,3 +193,18 @@ print(f"Yanlış Pozitif (FP - Gereksiz Alarm) : {cm_ens[0][1]}")
 print(f"Yanlış Negatif (FN - Kaçan Hasta)    : {cm_ens[1][0]} (Son Limit)")
 print(f"Gerçek Pozitif (TP - Bulunan Hasta)  : {cm_ens[1][1]}")
 print("=======================================================")
+
+
+import joblib
+
+joblib.dump(ensemble_model, "models/xgb_model.pkl")
+
+joblib.dump(final_model, "models/lgbm_model.pkl")
+joblib.dump(final_model, "models/xgb_model.pkl")
+
+import json
+
+with open("feature_list.json", "w") as f:
+    json.dump(list(X.columns), f)
+
+print("FEATURE LIST KAYDEDİLDİ ✔️")
