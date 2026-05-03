@@ -1,61 +1,57 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 23 22:01:16 2026
-
-@author: BUSE
-"""
-
 import pandas as pd
-
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
-from sklearn.preprocessing import RobustScaler
 
-VERI_YOLU =r"C:\Users\BUSE\OneDrive\Desktop\veri temizleme\clinvar_conflicting.csv"
-print("SISTEM BASLATILIYOR... veri okunuyor")
-#ilk 1000 satırı çekiyoruz
-df=pd.read_csv(VERI_YOLU , nrows=70000)
+VERI_YOLU=r"C:\Users\BUSE\OneDrive\Desktop\veri temizleme\clinvar_conflicting.csv"
+print("SISTEM BASLATILIYOR... Veri okunuyor")
 
-#verileri sayısal veri haline getiriyoruz 
-sayisal_kolonlar=['AF_ESP','AF_EXAC','AF_TGP','CADD_PHRED','CADD_RAW','LoFtool','CLASS']
-df_filtreli=df[sayisal_kolonlar]
+# low_memory=False: İşlemciye "Büyük dosya, tipleri karıştırma, yavaş oku ama doğru oku" diyoruz.
+df = pd.read_csv(VERI_YOLU, nrows=61000, low_memory=False)
+# CLASS sütunu bizim cevap anahtarımız. Temizlik yaparken makinenin bunu görmemesi lazım.
+y_hedef = df['CLASS']
 
-# verinin anatomisini ekrana yazdırıyoruz 
-print("\n---MATRİS BOYUTU ---")
-print(df_filtreli.shape)
+# axis=1 demek "o sütunu sütun bütünlüğünü bozmadan işleme sok " demektir.
+df_ozellikler = df.drop('CLASS', axis=1)
+print("Ana tablodaki kolon sayısı (CLASS hariç):", df_ozellikler.shape[1])
 
-print("\n---EKSİK VERİLER (NaN)---")
-print(df_filtreli.isnull().sum())
+#kolonların projemize yararlı olduğunu düşündüğümüz kısımlarını filtreledik 
+sayisal_kolonlar = ['AF_ESP', 'AF_EXAC', 'AF_TGP', 'CADD_PHRED', 'CADD_RAW', 'LoFtool', 'BLOSUM62', 'DISTANCE', 'STRAND']
+metin_kolonlari = ['CHROM', 'Consequence', 'IMPACT', 'BIOTYPE', 'CLNVC', 'ORIGIN', 'SIFT', 'PolyPhen']
 
-##VERI TEMIZLIGI
+#kolonları çekiyoruz
+df_sayisal_kisim = df_ozellikler[sayisal_kolonlar]
+df_metin_kisim = df_ozellikler[metin_kolonlari]
 
-print("\n VERİ TEMİZLİĞİ BAŞLIYOR...")
+#sayısallaştırıyoruz 
+print("Kolonlar 0-1 matrislerine dönüştürülüyor...")
+df_sayisallasmis = pd.get_dummies(df_metin_kisim, columns=metin_kolonlari)
 
-# 1. MICE ALGORİTMASI İLE EKSİK VERİLERİ (NaN) DOLDURMA
-print("MICE Algoritması çalışıyor... (Eksik veriler makine öğrenmesiyle tahmin ediliyor)")
+#sayısal verilerin matrislerini birleştiriyoruz
+df_islem = pd.concat([df_sayisal_kisim, df_sayisallasmis], axis=1)
+
+print("Genişletilmiş Yeni Kolon Sayısı:", df_islem.shape[1])
+
+# MICE algoritmasıyla doldurma işlemini yapıyoruz 
+# random_state=42: Deneyi her tekrarladığımızda aynı bilimsel sonucu almak için.
 imputer = IterativeImputer(random_state=42)
-# fit_transform veriyi numpy dizisine çevirir, biz tekrar Pandas DataFrame'e alıyoruz
-df_doldurulmus = pd.DataFrame(imputer.fit_transform(df_filtreli), columns=df_filtreli.columns)
 
-print("İşlem sonrası toplam eksik veri (NaN) sayısı:", df_doldurulmus.isnull().sum().sum())
+doldurulmus_matris = imputer.fit_transform(df_islem)
+df_doldurulmus = pd.DataFrame(doldurulmus_matris, columns=df_islem.columns)
 
+print("İşlem sonrası kalan eksik veri (NaN) sayısı:", df_doldurulmus.isnull().sum().sum())
+from sklearn.preprocessing import RobustScaler
+# Sıfıra bölünme hatasını (Sistem çökmesini) engellemek için paydaya 0.0001 ekliyoruz.
+df_doldurulmus['Risk_Indeksi'] = df_doldurulmus['CADD_PHRED'] / (df_doldurulmus['AF_ESP'] + 0.0001)
+print("Toplam Sensör Sayısı (Risk İndeksi Dahil):", df_doldurulmus.shape[1])
 
-# 2. ROBUST SCALER İLE UÇ DEĞERLERİ (OUTLIERS) BASKILAMA VE NORMALİZASYON
-print("RobustScaler çalışıyor... (Aykırı değerler eziliyor)")
+# aykırı değerleri robust scaler ile eziyoruz
 scaler = RobustScaler()
+X_final = pd.DataFrame(scaler.fit_transform(df_doldurulmus), columns=df_doldurulmus.columns)
 
-# CLASS sütunu bizim "0 veya 1" olan hedefimiz (Patojenik mi değil mi?). Onu ölçeklendirmemize gerek yok, ayırıyoruz.
-X_ozellikler = df_doldurulmus.drop('CLASS', axis=1)
-y_hedef = df_doldurulmus['CLASS']
+# class ı geri ekliyoruz 
+df_temiz = pd.concat([X_final, y_hedef.reset_index(drop=True)], axis=1)
 
-# Sadece özellikleri (AF_ESP, CADD vs.) ölçeklendiriyoruz
-X_olcekli = pd.DataFrame(scaler.fit_transform(X_ozellikler), columns=X_ozellikler.columns)
+df_temiz.to_csv("nihai_genetik_veri.csv", index=False)
 
-# Temizlenmiş ve ölçeklenmiş özellikleri, CLASS hedefimizle tekrar birleştiriyoruz
-df_temiz = pd.concat([X_olcekli, y_hedef], axis=1)
-
-print("\n--- İŞLEM TAMAM: YAPAY ZEKAYA GİRECEK TEMİZ MATRİS HAZIR ---")
-print(df_temiz.head())
-
-df_temiz.to_csv("teknofest_temiz_veri.csv", index=False)
-print("Veri başarıyla Hard Disk'e yazıldı. Görev Tamamlandı!")
+print("\n--- İŞLEM TAMAM ---")
+print(f"Nihai Matris Boyutu: {df_temiz.shape}")
