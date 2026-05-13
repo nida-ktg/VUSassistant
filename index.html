@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VUSassistant | Klinik Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- GİRİŞ EKRANI ARKA PLANI (Tam İstediğin #71A6BF Rengi) --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0; min-height: 100vh;
+            
+            /* Arka plan rengin */
+            background-color: #71A6BF; 
+            
+            /* Üzerindeki karanlık filtreyi kaldırdık, sadece logon var */
+            background-image: url('logo.png'); 
+            background-size: contain;    
+            background-repeat: no-repeat;
+            background-position: center; 
+            background-attachment: fixed;
+            
+            color: #f8fafc;
+        }
+
+        /* --- CAM EFEKTİ (Giriş & Kayıt Formları İçin) --- */
+        .cam-form { 
+            background: rgba(255, 255, 255, 0.25); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.4); 
+            border-radius: 24px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2); 
+        }
+
+        /* Girdi Kutuları (Form İçi) */
+        .girdi-giris { 
+            background: rgba(255, 255, 255, 0.95); 
+            border: 1px solid #1B7DAB; 
+            color: #1a202c; 
+            font-weight: 500; 
+        }
+
+        /* Etiketler (Arka plan açık renk olduğu için yazıları koyulaştırdık) */
+        .form-etiket-giris { display: block; font-size: 0.85rem; font-weight: 800; margin-bottom: 3px; color: #0f172a; }
+        .baslik-koyu { color: #0f172a; }
+
+
+        /* --- ANALİZ / DASHBOARD STİLLERİ (Beyaz ve Aydınlık) --- */
+        .panel-beyaz { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .girdi-panel { 
+            background: #f8fafc; 
+            border: 1px solid #cbd5e1; 
+            color: #0f172a; 
+            font-weight: 500; 
+            transition: all 0.2s;
+        }
+        .girdi-panel:focus {
+            border-color: #1B7DAB;
+            outline: none;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(27, 125, 171, 0.2);
+        }
+        .form-etiket-panel { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 5px; color: #475569; }
+
+
+        /* --- ORTAK KURUMSAL BUTON (#1B7DAB) --- */
+        .ana-buton { 
+            background-color: #1B7DAB; 
+            color: white; 
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px rgba(27, 125, 171, 0.3);
+        }
+        .ana-buton:hover { 
+            background-color: #15668d; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(27, 125, 171, 0.4);
+        }
+
+        /* --- SOL MENÜ BUTONLARI --- */
+        .menu-buton { color: #475569; transition: all 0.2s; }
+        .menu-buton:hover { background-color: #f1f5f9; color: #1B7DAB; }
+        .menu-aktif { background-color: rgba(27, 125, 171, 0.1); color: #1B7DAB; border-left: 4px solid #1B7DAB; font-weight: 700; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="girisEkrani" class="cam-form p-10 w-full max-w-md mx-4 text-center">
+        <div class="mb-6"><img src="logo.png" class="h-24 mx-auto drop-shadow-xl"></div> 
+        
+        <h2 class="text-2xl font-black mb-8 baslik-koyu drop-shadow-sm">SİSTEME GİRİŞ YAPIN</h2>
+        <div class="space-y-5 text-left">
+            <div>
+                <label class="form-etiket-giris">E-posta</label>
+                <input type="text" id="girisEmail" class="girdi-giris w-full px-4 py-3 rounded-xl" placeholder="doktor@hastane.com">
+            </div>
+            <div>
+                <label class="form-etiket-giris">Şifre</label>
+                <input type="password" id="girisSifre" class="girdi-giris w-full px-4 py-3 rounded-xl" placeholder="••••••••">
+            </div>
+            <div class="flex justify-between items-center pt-4">
+                <a href="#" onclick="ekranDegistir('kayitEkrani')" class="text-[#0f172a] hover:text-[#1B7DAB] underline text-sm font-bold">KAYIT OLUN</a>
+                <button onclick="sistemeGir()" class="ana-buton font-bold py-3 px-10 rounded-xl">GİRİŞ YAP</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="kayitEkrani" class="hidden cam-form p-8 w-full max-w-md mx-4 text-center">
+        <div class="mb-4"><img src="logo.png" class="h-16 mx-auto drop-shadow-lg"></div>
+        
+        <h2 class="text-2xl font-black mb-6 baslik-koyu drop-shadow-sm">SİSTEME KAYIT OLUN</h2>
+        <div class="space-y-4 text-left">
+            <div><label class="form-etiket-giris">Ad Soyad</label><input type="text" id="kayitAd" class="girdi-giris w-full px-4 py-2 rounded-lg"></div>
+            <div><label class="form-etiket-giris">Çalıştığı Kurum/Hastane</label><input type="text" id="kayitKurum" class="girdi-giris w-full px-4 py-2 rounded-lg"></div>
+            <div><label class="form-etiket-giris">E-posta</label><input type="email" id="kayitEmail" class="girdi-giris w-full px-4 py-2 rounded-lg"></div>
+            <div><label class="form-etiket-giris">Şifre</label><input type="password" id="kayitSifre1" class="girdi-giris w-full px-4 py-2 rounded-lg"></div>
+            <div><label class="form-etiket-giris">Şifre Tekrar</label><input type="password" id="kayitSifre2" class="girdi-giris w-full px-4 py-2 rounded-lg"></div>
+            <div class="flex justify-between items-center pt-2">
+                <a href="#" onclick="ekranDegistir('girisEkrani')" class="text-[#0f172a] hover:text-[#1B7DAB] underline text-sm font-bold">GİRİŞ YAP</a>
+                <button onclick="kayitOlKontrol()" class="ana-buton font-bold py-2.5 px-8 rounded-xl">KAYIT OL</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="anaEkran" class="hidden fixed inset-0 w-full h-full bg-[#F0F4F8] p-6 grid-cols-12 gap-6 z-50 overflow-hidden">
+        
+        <div class="col-span-3 panel-beyaz p-6 flex flex-col h-full">
+            <div class="text-center mb-8 border-b border-gray-100 pb-6 mt-4">
+                <div class="bg-white rounded-xl p-2 mb-4 mx-auto inline-block shadow-sm border border-gray-100">
+                    <img src="logo.png" class="h-16">
+                </div>
+                <h2 class="text-2xl font-black text-[#0f172a] tracking-tight">VUS<span class="text-[#1B7DAB]">assistant</span></h2>
+            </div>
+            
+            <div class="flex items-center space-x-3 mb-10 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <div class="w-12 h-12 rounded-full bg-[#1B7DAB] flex items-center justify-center font-bold text-xl text-white shadow-md">👨‍⚕️</div>
+                <div>
+                    <p id="doktorIsmi" class="font-bold text-md text-[#0f172a]">-</p>
+                    <p id="doktorKurum" class="text-xs text-[#1B7DAB] font-semibold">-</p>
+                </div>
+            </div>
+            <nav class="space-y-2 flex-grow">
+                <button onclick="menuGecis('analizGordunumu')" class="w-full text-left px-4 py-3 rounded-xl menu-aktif">🧬 Analiz Yap</button>
+                <button onclick="menuGecis('arsivGordunumu')" class="w-full text-left px-4 py-3 rounded-xl menu-buton font-medium">📁 Hasta Arşivi</button>
+            </nav>
+            <button onclick="location.reload()" class="w-full py-3 mt-4 rounded-xl border border-red-200 bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-all">GÜVENLİ ÇIKIŞ</button>
+        </div>
+
+        <div class="col-span-9 overflow-y-auto h-full pr-2 pb-10">
+            <div id="analizGordunumu" class="panel-beyaz p-8">
+                <h1 class="text-3xl font-black mb-8 text-[#0f172a]">Varyant Analiz Portu</h1>
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="form-etiket-panel">Hasta TC Kimlik</label>
+                        <input type="text" id="hastaTC" class="girdi-panel w-full p-4 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="form-etiket-panel">Hasta Ad Soyad</label>
+                        <input type="text" id="hastaAd" class="girdi-panel w-full p-4 rounded-xl">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="form-etiket-panel">Varyant Türü / Gen Sembolü</label>
+                        <input type="text" id="varyantTuru" class="girdi-panel w-full p-4 rounded-xl">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="form-etiket-panel">Makine Öğrenmesi Genetik Veri Dizisi</label>
+                    <textarea id="veri_kutusu" rows="4" class="w-full girdi-panel p-4 rounded-xl font-mono text-sm mb-6" placeholder="0.0, -0.033, ..."></textarea>
+                </div>
+
+                <button id="analizBtn" onclick="analizBaslat()" class="w-full ana-buton py-4 rounded-xl font-bold text-lg">🤖 YAPAY ZEKA İLE ANALİZİ BAŞLAT</button>
+                
+                <div id="sonucAlani" class="hidden mt-10 pt-10 border-t border-gray-200">
+                    <div class="grid grid-cols-2 gap-8">
+                        <div class="bg-blue-50 p-8 rounded-3xl text-center border border-blue-100">
+                            <p class="text-[#1B7DAB] font-bold text-sm mb-2 uppercase tracking-wide">Yapay Zeka Kararı</p>
+                            <p id="sonucKarar" class="text-4xl font-black mb-2">-</p>
+                            <p class="text-2xl font-bold text-gray-800"><span id="sonucYuzde">0</span>% Risk</p>
+                        </div>
+                        <div class="bg-gray-50 p-8 rounded-3xl border border-gray-200">
+                            <p class="text-gray-500 font-bold text-sm mb-2 uppercase tracking-wide">Tıbbi Doğrulama</p>
+                            <p id="sonucKural" class="text-gray-700 text-sm leading-relaxed font-medium">-</p>
+                        </div>
+                    </div>
+                    <div id="shapAlani" class="mt-8 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm"><img id="shap_gorseli" class="w-full rounded-xl"></div>
+                </div>
+            </div>
+
+            <div id="arsivGordunumu" class="hidden panel-beyaz p-8">
+                <h1 class="text-3xl font-black mb-8 text-[#0f172a]">📁 Arşivlenen Hasta Dosyaları</h1>
+                <div class="overflow-hidden rounded-xl border border-gray-200">
+                    <table class="w-full text-left bg-white">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-[#1B7DAB] text-sm uppercase tracking-wide"><th class="p-4 font-bold">Tarih</th><th class="p-4 font-bold">Hasta Adı</th><th class="p-4 font-bold">Sonuç Durumu</th></tr>
+                        </thead>
+                        <tbody id="hastaTablosu" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let DOKTOR_EMAIL = "";
+        
+        function ekranDegistir(id) { 
+            document.getElementById('girisEkrani').classList.add('hidden'); 
+            document.getElementById('kayitEkrani').classList.add('hidden'); 
+            document.getElementById(id).classList.remove('hidden'); 
+        }
+        
+        function menuGecis(id) { 
+            document.getElementById('analizGordunumu').classList.add('hidden'); 
+            document.getElementById('arsivGordunumu').classList.add('hidden'); 
+            document.getElementById(id).classList.remove('hidden'); 
+            
+            const butonlar = document.querySelectorAll('nav button');
+            butonlar.forEach(b => { b.classList.remove('menu-aktif'); b.classList.add('menu-buton'); });
+            event.target.classList.add('menu-aktif');
+            event.target.classList.remove('menu-buton');
+
+            if(id === 'arsivGordunumu') dosyalariGetir(); 
+        }
+
+        async function kayitOlKontrol() {
+            const veri = { ad_soyad: document.getElementById("kayitAd").value, kurum: document.getElementById("kayitKurum").value, email: document.getElementById("kayitEmail").value, sifre: document.getElementById("kayitSifre1").value };
+            if(veri.sifre !== document.getElementById("kayitSifre2").value) return alert("Hata: Şifreler uyuşmuyor!");
+            if(!veri.ad_soyad || !veri.email || !veri.sifre) return alert("Lütfen tüm alanları doldurun!");
+
+            const res = await fetch('http://127.0.0.1:8000/kayit', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(veri) });
+            if(res.ok) { 
+                alert("Kayıt Başarılı! Sisteme giriş yapabilirsiniz."); 
+                ekranDegistir('girisEkrani'); 
+                document.getElementById('girisEmail').value = veri.email;
+            } else { 
+                const hata = await res.json(); alert("Hata: " + hata.detail); 
+            }
+        }
+
+        async function sistemeGir() {
+            const email = document.getElementById("girisEmail").value;
+            const sifre = document.getElementById("girisSifre").value;
+            if(!email || !sifre) return alert("Lütfen e-posta ve şifrenizi girin!");
+
+            const res = await fetch('http://127.0.0.1:8000/giris', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: email, sifre: sifre }) });
+            if(res.ok) {
+                const d = await res.json(); 
+                DOKTOR_EMAIL = email;
+                document.getElementById("doktorIsmi").innerText = d.ad_soyad; 
+                document.getElementById("doktorKurum").innerText = d.kurum;
+                document.getElementById("girisEkrani").classList.add("hidden"); 
+                document.getElementById("anaEkran").classList.remove("hidden");
+                document.getElementById("anaEkran").classList.add("grid");
+            } else { alert("Hatalı e-posta veya şifre!"); }
+        }
+
+        async function analizBaslat() {
+            const tc = document.getElementById("hastaTC").value;
+            const ad = document.getElementById("hastaAd").value;
+            const varyant = document.getElementById("varyantTuru").value;
+            const veriDizisi = document.getElementById("veri_kutusu").value;
+
+            if(!tc || !ad || !varyant || !veriDizisi) return alert("Lütfen analize başlamadan önce hastanın tüm bilgilerini doldurun!");
+
+            const btn = document.getElementById("analizBtn"); 
+            btn.innerText = "Yapay Zeka Hesaplanıyor..."; btn.disabled = true;
+
+            try {
+                const res = await fetch('http://127.0.0.1:8000/analiz', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ genetik_veri: veriDizisi, tc: tc, ad: ad, varyant: varyant, doktor_email: DOKTOR_EMAIL }) });
+                if(!res.ok) throw new Error("Sunucu Hatası");
+                const s = await res.json(); 
+                btn.innerText = "🤖 YAPAY ZEKA İLE ANALİZİ BAŞLAT"; btn.disabled = false;
+                
+                document.getElementById("sonucAlani").classList.remove("hidden");
+                const k = document.getElementById("sonucKarar"); 
+                k.innerText = s.karar;
+                k.style.color = s.karar === "PATOJENİK" ? "#ef4444" : "#10b981";
+                document.getElementById("sonucYuzde").innerText = s.yuzde; 
+                document.getElementById("sonucKural").innerText = s.kural;
+                if(s.shap_resmi) { document.getElementById("shapAlani").classList.remove("hidden"); document.getElementById("shap_gorseli").src = "data:image/png;base64," + s.shap_resmi; }
+                document.getElementById("sonucAlani").scrollIntoView({ behavior: 'smooth' });
+            } catch(e) { alert("Sunucuya ulaşılamıyor! Terminali kontrol edin."); btn.innerText = "🤖 YAPAY ZEKA İLE ANALİZİ BAŞLAT"; btn.disabled = false; }
+        }
+
+        async function dosyalariGetir() {
+            try {
+                const res = await fetch(`http://127.0.0.1:8000/hastalar?doktor_email=${DOKTOR_EMAIL}`);
+                const d = await res.json();
+                const t = document.getElementById("hastaTablosu"); t.innerHTML = "";
+                if(d.hastalar.length === 0) { t.innerHTML = '<tr><td colspan="3" class="p-4 text-gray-500 text-center">Henüz hasta analizi bulunmamaktadır.</td></tr>'; return; }
+                d.hastalar.forEach(h => { 
+                    t.innerHTML += `<tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-4 text-sm text-gray-500">${h.tarih}</td>
+                        <td class="p-4 font-bold text-gray-800">${h.ad}</td>
+                        <td class="p-4 ${h.sonuc === 'PATOJENİK' ? 'text-red-500' : 'text-emerald-500'} font-black">${h.sonuc} <span class="text-xs text-gray-400">(%${h.yuzde})</span></td>
+                    </tr>`; 
+                });
+            } catch(e) { document.getElementById("hastaTablosu").innerHTML = '<tr><td colspan="3" class="text-red-500 p-4">Veriler çekilemedi.</td></tr>'; }
+        }
+    </script>
+</body>
+</html>
+
+
+
