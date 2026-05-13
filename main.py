@@ -104,7 +104,16 @@ async def analiz_et(veri: AnalizVerisi):
         # Analiz mantığı (Scaler iptal edilmiş haliyle)
         temiz_metin = re.sub(r'[;\t\n]+', ',', veri.genetik_veri.strip())
         ham_parcalar = [p.strip() for p in temiz_metin.split(',') if p.strip()]
-        temizlenmis_sayilar = [float(p) for p in ham_parcalar[:len(FEATURE_NAMES)]]
+        beklenen_uzunluk = len(FEATURE_NAMES)
+        girilen_uzunluk = len(ham_parcalar)
+
+        if girilen_uzunluk != beklenen_uzunluk:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Hata: Tam olarak {beklenen_uzunluk} adet parametre girmelisiniz. (Siz {girilen_uzunluk} adet girdiniz). Lütfen verinizi kontrol edin."
+            )
+        temizlenmis_sayilar = [float(p) for p in ham_parcalar]
+    
 
         df_hasta = pd.DataFrame([temizlenmis_sayilar], columns=FEATURE_NAMES)
         olasiliklar = model.predict_proba(df_hasta)[0]

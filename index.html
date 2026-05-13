@@ -139,7 +139,7 @@
             </div>
             
             <div class="flex items-center space-x-3 mb-10 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                <div class="w-12 h-12 rounded-full bg-[#1B7DAB] flex items-center justify-center font-bold text-xl text-white shadow-md">👨‍⚕️</div>
+                <div class="w-12 h-12 rounded-full bg-[#1B7DAB] flex items-center justify-center font-bold text-xl text-white shadow-md">👩‍⚕️</div>
                 <div>
                     <p id="doktorIsmi" class="font-bold text-md text-[#0f172a]">-</p>
                     <p id="doktorKurum" class="text-xs text-[#1B7DAB] font-semibold">-</p>
@@ -271,11 +271,21 @@
 
             const btn = document.getElementById("analizBtn"); 
             btn.innerText = "Yapay Zeka Hesaplanıyor..."; btn.disabled = true;
-
             try {
                 const res = await fetch('http://127.0.0.1:8000/analiz', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ genetik_veri: veriDizisi, tc: tc, ad: ad, varyant: varyant, doktor_email: DOKTOR_EMAIL }) });
-                if(!res.ok) throw new Error("Sunucu Hatası");
+                
+                // DİKKAT: Hata olsa bile API'den gelen paketi okuyoruz
                 const s = await res.json(); 
+
+                // --- ZIRHLI ALICI KATMANI (Fail-Fast Sensörü) ---
+                if (!res.ok) {
+                    alert(s.detail || "Sistem Hatası: Verinizi kontrol edin!");
+                    btn.innerText = "🤖 YAPAY ZEKA İLE ANALİZİ BAŞLAT";
+                    btn.disabled = false;
+                    return; // İşlemi anında kes, grafikleri çizmeye çalışma!
+                }
+                // ------------------------------------------------
+
                 btn.innerText = "🤖 YAPAY ZEKA İLE ANALİZİ BAŞLAT"; btn.disabled = false;
                 
                 document.getElementById("sonucAlani").classList.remove("hidden");
@@ -286,9 +296,12 @@
                 document.getElementById("sonucKural").innerText = s.kural;
                 if(s.shap_resmi) { document.getElementById("shapAlani").classList.remove("hidden"); document.getElementById("shap_gorseli").src = "data:image/png;base64," + s.shap_resmi; }
                 document.getElementById("sonucAlani").scrollIntoView({ behavior: 'smooth' });
-            } catch(e) { alert("Sunucuya ulaşılamıyor! Terminali kontrol edin."); btn.innerText = "🤖 YAPAY ZEKA İLE ANALİZİ BAŞLAT"; btn.disabled = false; }
+            } catch(e) { 
+                alert("Sunucuya ulaşılamıyor! Terminali kontrol edin."); 
+                btn.innerText = "🤖 YAPAY ZEKA İLE ANALİZİ BAŞLAT"; 
+                btn.disabled = false; 
+            }
         }
-
         async function dosyalariGetir() {
             try {
                 const res = await fetch(`http://127.0.0.1:8000/hastalar?doktor_email=${DOKTOR_EMAIL}`);
@@ -307,6 +320,3 @@
     </script>
 </body>
 </html>
-
-
-
