@@ -149,11 +149,11 @@ VUSassistant/
 
 Proje geliştirme sürecinde hazırlanan raporlar aşağıda yer almaktadır:
 
-- [📄 Gereksinim Analizi Raporu](docs/gereksinim-analizi-raporu.pdf)
+- [📄 Gereksinim Analizi Raporu](docs/gereksinim_analizi_raporu.pdf)
 
-- [📄 Mimari Tasarım Raporu](docs/mimari-tasarim-raporu.pdf)
+- [📄 Mimari Tasarım Raporu](docs/mimari_tasarim_raporu.pdf)
 
-- [📄 Proje Sonuç Raporu](docs/proje-sonuc-raporu.pdf)
+- [📄 Proje Sonuç Raporu](docs/proje_sonuc_raporu.pdf)
 
 ---
 
@@ -161,27 +161,27 @@ Proje geliştirme sürecinde hazırlanan raporlar aşağıda yer almaktadır:
 
 ## Giriş ve Kayıt Ekranı
 
-```md
+
 ![Giriş Ekranı](images/giris.png)
-```
-```md
+
+
 ![Kayıt Ekranı](images/kayit.png)
-```
+
 ---
 
 ## Analiz Ekranı
 
-```md
+
 ![Analiz Ekranı](images/analiz.png)
-```
+
 
 ---
 
 ## SHAP Analiz Görseli
 
-```md
+
 ![SHAP Grafiği](images/shap.png)
-```
+
 
 ---
 
