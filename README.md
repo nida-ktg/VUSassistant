@@ -130,17 +130,23 @@ Makine öğrenmesi ve veri analizi süreçleri bu branch üzerinde geliştirilmi
 ```bash
 VUSassistant/
 │
-├── web/
-│
-├── machine-learning/
-│
-├── backend/
-│
 ├── docs/
+├── images/
+├── models/
+├── __pycache__/
 │
-├── requirements.txt
+├── main.py
+├── rule_engine.py
+├── xai_explainer.py
+├── veri.temizlik.py
+├── feature_list.json
+├── makine ogrenmesi.py
 │
-└── README.md
+├── index.html
+├── logo.png
+│
+├── README.md
+├── .gitignore
 ```
 
 ---
@@ -190,7 +196,7 @@ Proje geliştirme sürecinde hazırlanan raporlar aşağıda yer almaktadır:
 ## Repository Klonlama
 
 ```bash
-git clone https://github.com/kullaniciadi/VUSassistant.git
+git clone https://github.com/nida-ktg/VUSassistant.git
 ```
 
 ## Proje Klasörüne Geçiş
