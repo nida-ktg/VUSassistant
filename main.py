@@ -101,19 +101,27 @@ async def hastalari_getir(doktor_email: str):
 @app.post("/analiz")
 async def analiz_et(veri: AnalizVerisi):
     try:
-        # Analiz mantığı (Scaler iptal edilmiş haliyle)
+        # Veriyi temizle ve parçalara ayır
         temiz_metin = re.sub(r'[;\t\n]+', ',', veri.genetik_veri.strip())
         ham_parcalar = [p.strip() for p in temiz_metin.split(',') if p.strip()]
         beklenen_uzunluk = len(FEATURE_NAMES)
         girilen_uzunluk = len(ham_parcalar)
 
+        # 1. KONTROL: Arkadaşının uzunluk kontrolü
         if girilen_uzunluk != beklenen_uzunluk:
             raise HTTPException(
                 status_code=400, 
                 detail=f"Hata: Tam olarak {beklenen_uzunluk} adet parametre girmelisiniz. (Siz {girilen_uzunluk} adet girdiniz). Lütfen verinizi kontrol edin."
             )
-        temizlenmis_sayilar = [float(p) for p in ham_parcalar]
-    
+        
+        # 2. KONTROL: Harf veya yanlış karakter girilirse sistemi çökertme
+        try:
+            temizlenmis_sayilar = [float(p) for p in ham_parcalar]
+        except ValueError:
+            raise HTTPException(
+                status_code=400, 
+                detail="Hata: Veri dizisi içinde sayı olmayan geçersiz karakterler tespit edildi!"
+            )
 
         df_hasta = pd.DataFrame([temizlenmis_sayilar], columns=FEATURE_NAMES)
         olasiliklar = model.predict_proba(df_hasta)[0]
@@ -140,5 +148,10 @@ async def analiz_et(veri: AnalizVerisi):
             "basarili": True, "karar": ai_karari, "yuzde": risk_yuzdesi,
             "kural": kural_sonucu.explanation, "shap_resmi": generate_shap_plot(df_hasta)
         }
+        
+  
+    except HTTPException:
+        raise
     except Exception as e:
+        # Eğer modelde, veritabanında vb. beklenmedik bir sistem hatası olursa onu 500 olarak gönder
         raise HTTPException(status_code=500, detail=str(e))
