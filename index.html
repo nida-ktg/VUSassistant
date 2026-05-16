@@ -15,7 +15,7 @@
             /* Arka plan rengin */
             background-color: #71A6BF; 
             
-            /* Üzerindeki karanlık filtreyi kaldırdık, sadece logon var */
+            /* Üzerindeki karanlık filtreyi kaldırdık, sadece logo var */
             background-image: url('logo.png'); 
             background-size: contain;    
             background-repeat: no-repeat;
@@ -234,6 +234,13 @@
             if(veri.sifre !== document.getElementById("kayitSifre2").value) return alert("Hata: Şifreler uyuşmuyor!");
             if(!veri.ad_soyad || !veri.email || !veri.sifre) return alert("Lütfen tüm alanları doldurun!");
 
+            // --- YENİ AD SOYAD KONTROLÜ ---
+            const sayiKontrolu = /\d/; 
+            if (sayiKontrolu.test(veri.ad_soyad)) {
+                return alert("Hata: Geçersiz giriş! Ad Soyad alanına rakam yazılamaz.");
+            }
+            // ------------------------------
+
             const res = await fetch('http://127.0.0.1:8000/kayit', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(veri) });
             if(res.ok) { 
                 alert("Kayıt Başarılı! Sisteme giriş yapabilirsiniz."); 
@@ -268,6 +275,16 @@
             const veriDizisi = document.getElementById("veri_kutusu").value;
 
             if(!tc || !ad || !varyant || !veriDizisi) return alert("Lütfen analize başlamadan önce hastanın tüm bilgilerini doldurun!");
+
+            // --- YENİ TC KİMLİK KONTROLÜ ---
+            if (tc.length !== 11 || !/^\d+$/.test(tc)) {
+                return alert("Hata: TC Kimlik numarası tam olarak 11 haneli rakamlardan oluşmalıdır!");
+            }
+            if (parseInt(tc[10]) % 2 !== 0) {
+                return alert("Hata: Geçersiz TC Kimlik numarası! TC numarasının son hanesi tek sayı olamaz.");
+            }
+            // -------------------------------
+
 
             const btn = document.getElementById("analizBtn"); 
             btn.innerText = "Yapay Zeka Hesaplanıyor..."; btn.disabled = true;
